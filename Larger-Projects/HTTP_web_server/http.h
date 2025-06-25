@@ -35,3 +35,5 @@ void create_directory_listing(http_response_t* response, const char* dirpath);
 void free_http_response(http_response_t* response);
 const char* get_status_text(int status_code);
 const char* get_content_type(const char* filepath);
+
+#endif // HTTP_H
