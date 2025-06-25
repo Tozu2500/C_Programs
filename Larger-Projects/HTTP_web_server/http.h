@@ -29,3 +29,9 @@ typedef struct {
 int parse_http_request(const char* raw_request, http_request_t* request);
 void process_http_request(int client_fd, const char* raw_request);
 void send_http_response(int client_fd, http_response_t* response);
+void create_error_response(http_response_t* response, int status_code, const char* message);
+void create_file_response(http_response_t* response, const char* filepath);
+void create_directory_listing(http_response_t* response, const char* dirpath);
+void free_http_response(http_response_t* response);
+const char* get_status_text(int status_code);
+const char* get_content_type(const char* filepath);
