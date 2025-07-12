@@ -41,7 +41,7 @@ typedef struct {
     int capacity;
 } DirectoryListing;
 
-// Core file ops
+// Core file operations
 FileOpResult fm_create_file(const char *filepath, const char *content);
 FileOpResult fm_read_file(const char *filepath, char **content, long *size);
 FileOpResult fm_write_file(const char *filepath, const char *content, int append);
@@ -57,18 +57,18 @@ FileOpResult fm_list_directory(const char *dirpath, DirectoryListing *listing);
 FileOpResult fm_change_directory(const char *dirpath);
 char* fm_get_current_directory(void);
 
-// File info & utils
+// File information and utilities
 FileOpResult fm_get_file_info(const char *filepath, FileInfo *info);
 int fm_file_exists(const char *filepath);
 int fm_is_directory(const char *filepath);
 long fm_get_file_size(const char *filepath);
 FileOpResult fm_set_permissions(const char *filepath, mode_t permissions);
 
-// Search and filter
-FileOpResult fm_search_files(const char *directory, consh char *pattern, DirectoryListing *results);
+// Search and filtering
+FileOpResult fm_search_files(const char *directory, const char *pattern, DirectoryListing *results);
 FileOpResult fm_filter_by_extension(const DirectoryListing *input, const char *extension, DirectoryListing *output);
 
-// Util functions
+// Utility functions
 void fm_free_directory_listing(DirectoryListing *listing);
 const char* fm_get_error_message(FileOpResult result);
 char* fm_get_file_extension(const char *filename);
@@ -79,6 +79,6 @@ void fm_print_directory_listing(const DirectoryListing *listing);
 char* fm_join_path(const char *dir, const char *filename);
 char* fm_get_parent_directory(const char *filepath);
 char* fm_get_filename(const char *filepath);
-char* fm_is_absolute_path(const char *path);
+int fm_is_absolute_path(const char *path);
 
 #endif // FILE_MANAGER_H

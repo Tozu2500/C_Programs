@@ -2,13 +2,13 @@
 
 void print_menu() {
     printf("\n=== File Management System ===\n");
-    printf("1. Create a new file\n");
+    printf("1. Create file\n");
     printf("2. Read file\n");
-    printf("3. Write to a file\n");
-    printf("4. Delete a file\n");
+    printf("3. Write to file\n");
+    printf("4. Delete file\n");
     printf("5. Copy file\n");
-    printf("6. Move or Rename a file\n");
-    printf("7. Create new directory\n");
+    printf("6. Move/Rename file\n");
+    printf("7. Create directory\n");
     printf("8. Delete directory\n");
     printf("9. List directory\n");
     printf("10. Change directory\n");
@@ -21,21 +21,21 @@ void print_menu() {
 }
 
 void handle_create_file() {
-    char filepath[MAX_FILENAME_LENGTH];
+    char filepath[MAX_PATH_LENGTH];
     char content[BUFFER_SIZE];
-
+    
     printf("Enter file path: ");
     scanf("%s", filepath);
-
+    
     printf("Enter content (or press Enter for empty file): ");
-    getchar();
+    getchar(); // consume newline
     fgets(content, BUFFER_SIZE, stdin);
-
+    
     FileOpResult result = fm_create_file(filepath, content);
     if (result == FILE_OP_SUCCESS) {
-        printf("File was created successfully!\n");
+        printf("File created successfully!\n");
     } else {
-        printf("There was an error creating file: %s\n", fm_get_error_message(result));
+        printf("Error creating file: %s\n", fm_get_error_message(result));
     }
 }
 
@@ -43,10 +43,10 @@ void handle_read_file() {
     char filepath[MAX_PATH_LENGTH];
     char *content;
     long size;
-
-    printf("Enter filepath: ");
+    
+    printf("Enter file path: ");
     scanf("%s", filepath);
-
+    
     FileOpResult result = fm_read_file(filepath, &content, &size);
     if (result == FILE_OP_SUCCESS) {
         printf("File content (%ld bytes):\n", size);
@@ -61,17 +61,17 @@ void handle_write_file() {
     char filepath[MAX_PATH_LENGTH];
     char content[BUFFER_SIZE];
     int append;
-
-    printf("Enter filepath: ");
+    
+    printf("Enter file path: ");
     scanf("%s", filepath);
-
-    printf("Append to file? (1=Yes, 2=No): ");
+    
+    printf("Append to file? (1=yes, 0=no): ");
     scanf("%d", &append);
-
+    
     printf("Enter content: ");
-    getchar();
+    getchar(); // consume newline
     fgets(content, BUFFER_SIZE, stdin);
-
+    
     FileOpResult result = fm_write_file(filepath, content, append);
     if (result == FILE_OP_SUCCESS) {
         printf("File written successfully!\n");
@@ -82,28 +82,28 @@ void handle_write_file() {
 
 void handle_delete_file() {
     char filepath[MAX_PATH_LENGTH];
-
+    
     printf("Enter file path: ");
     scanf("%s", filepath);
-
+    
     FileOpResult result = fm_delete_file(filepath);
     if (result == FILE_OP_SUCCESS) {
-        printf("File was deleted successfully!\n");
+        printf("File deleted successfully!\n");
     } else {
-        printf("There was an error deleting file: %s\n", fm_get_error_message(result));
+        printf("Error deleting file: %s\n", fm_get_error_message(result));
     }
 }
 
 void handle_copy_file() {
     char source[MAX_PATH_LENGTH];
     char destination[MAX_PATH_LENGTH];
-
+    
     printf("Enter source file path: ");
     scanf("%s", source);
-
+    
     printf("Enter destination file path: ");
     scanf("%s", destination);
-
+    
     FileOpResult result = fm_copy_file(source, destination);
     if (result == FILE_OP_SUCCESS) {
         printf("File copied successfully!\n");
@@ -115,16 +115,16 @@ void handle_copy_file() {
 void handle_move_file() {
     char source[MAX_PATH_LENGTH];
     char destination[MAX_PATH_LENGTH];
-
+    
     printf("Enter source file path: ");
     scanf("%s", source);
-
+    
     printf("Enter destination file path: ");
     scanf("%s", destination);
-
+    
     FileOpResult result = fm_move_file(source, destination);
     if (result == FILE_OP_SUCCESS) {
-        printf("File was moved successfully!\n");
+        printf("File moved successfully!\n");
     } else {
         printf("Error moving file: %s\n", fm_get_error_message(result));
     }
@@ -132,10 +132,10 @@ void handle_move_file() {
 
 void handle_create_directory() {
     char dirpath[MAX_PATH_LENGTH];
-
+    
     printf("Enter directory path: ");
     scanf("%s", dirpath);
-
+    
     FileOpResult result = fm_create_directory(dirpath);
     if (result == FILE_OP_SUCCESS) {
         printf("Directory created successfully!\n");
@@ -146,10 +146,10 @@ void handle_create_directory() {
 
 void handle_delete_directory() {
     char dirpath[MAX_PATH_LENGTH];
-
+    
     printf("Enter directory path: ");
     scanf("%s", dirpath);
-
+    
     FileOpResult result = fm_delete_directory(dirpath);
     if (result == FILE_OP_SUCCESS) {
         printf("Directory deleted successfully!\n");
@@ -161,10 +161,10 @@ void handle_delete_directory() {
 void handle_list_directory() {
     char dirpath[MAX_PATH_LENGTH];
     DirectoryListing listing;
-
+    
     printf("Enter directory path (or . for current): ");
     scanf("%s", dirpath);
-
+    
     FileOpResult result = fm_list_directory(dirpath, &listing);
     if (result == FILE_OP_SUCCESS) {
         fm_print_directory_listing(&listing);
@@ -176,10 +176,10 @@ void handle_list_directory() {
 
 void handle_change_directory() {
     char dirpath[MAX_PATH_LENGTH];
-
+    
     printf("Enter directory path: ");
     scanf("%s", dirpath);
-
+    
     FileOpResult result = fm_change_directory(dirpath);
     if (result == FILE_OP_SUCCESS) {
         printf("Directory changed successfully!\n");
@@ -201,10 +201,10 @@ void handle_get_current_directory() {
 void handle_get_file_info() {
     char filepath[MAX_PATH_LENGTH];
     FileInfo info;
-
+    
     printf("Enter file path: ");
     scanf("%s", filepath);
-
+    
     FileOpResult result = fm_get_file_info(filepath, &info);
     if (result == FILE_OP_SUCCESS) {
         fm_print_file_info(&info);
@@ -217,16 +217,16 @@ void handle_search_files() {
     char directory[MAX_PATH_LENGTH];
     char pattern[MAX_FILENAME_LENGTH];
     DirectoryListing results;
-
+    
     printf("Enter directory to search: ");
     scanf("%s", directory);
-
+    
     printf("Enter search pattern: ");
     scanf("%s", pattern);
-
+    
     FileOpResult result = fm_search_files(directory, pattern, &results);
     if (result == FILE_OP_SUCCESS) {
-        printf("Search results:\n");,
+        printf("Search results:\n");
         fm_print_directory_listing(&results);
         fm_free_directory_listing(&results);
     } else {
@@ -237,13 +237,13 @@ void handle_search_files() {
 void handle_set_permissions() {
     char filepath[MAX_PATH_LENGTH];
     int permissions;
-
+    
     printf("Enter file path: ");
     scanf("%s", filepath);
-
+    
     printf("Enter permissions (octal, e.g., 755): ");
     scanf("%o", &permissions);
-
+    
     FileOpResult result = fm_set_permissions(filepath, permissions);
     if (result == FILE_OP_SUCCESS) {
         printf("Permissions set successfully!\n");
@@ -254,13 +254,13 @@ void handle_set_permissions() {
 
 int main() {
     int choice;
-
+    
     printf("Welcome to the File Management System!\n");
-
+    
     while (1) {
         print_menu();
         scanf("%d", &choice);
-
+        
         switch (choice) {
             case 1:
                 handle_create_file();
@@ -305,12 +305,12 @@ int main() {
                 handle_set_permissions();
                 break;
             case 0:
-                printf("Thanks for using the app!\n");
+                printf("Goodbye!\n");
                 return 0;
             default:
-                printf("Invalid choice\n");
+                printf("Invalid choice. Please try again.\n");
         }
     }
-
+    
     return 0;
 }
