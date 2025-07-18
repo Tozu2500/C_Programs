@@ -14,7 +14,7 @@ void physics_update(PhysicsSystem* system, float delta_time) {
 
     physics_apply_forces(system);
     physics_integrate(system);
-    physics_handle_collision(system);
+    physics_handle_collisions(system);
 }
 
 void physics_add_particle(PhysicsSystem* system, float x, float y, float vx, float vy) {
