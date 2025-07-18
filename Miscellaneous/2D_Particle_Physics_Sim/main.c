@@ -13,9 +13,11 @@
 #endif
 #include "physics.h"
 
+// Console buffer for rendering
 char screen_buffer[SCREEN_HEIGHT][SCREEN_WIDTH + 1];
-PhysicsSystem* physics_system;
+PhysicsSystem physics_system;
 
+// Function prototypes
 void init_console(void);
 void cleanup_console(void);
 void clear_screen(void);
@@ -26,6 +28,7 @@ int kbhit(void);
 void setup_particles(void);
 void handle_input(void);
 
+// Cross-platform console utilities
 #ifdef _WIN32
 void gotoxy(int x, int y) {
     COORD coord;
@@ -61,73 +64,80 @@ int kbhit(void) {
 
 int main(void) {
     srand(time(NULL));
-
+    
     init_console();
-
+    
+    // Initialize physics system
     physics_init(&physics_system);
     setup_particles();
-
-    printf("Physics Simulation - Press 'q' to quit, 'r' to reset and 'a' to add a particle!\n");
-    printf("Particless will bounce around the screen\n");
+    
+    printf("Physics Simulation - Press 'q' to quit, 'r' to reset, 'a' to add particle\n");
+    printf("Particles will bounce around the screen!\n");
     printf("Press any key to start...\n");
     getchar();
-
+    
     clock_t last_time = clock();
     int frame_count = 0;
-
+    
     while (1) {
         clock_t current_time = clock();
         float delta_time = (float)(current_time - last_time) / CLOCKS_PER_SEC;
         last_time = current_time;
-
-        // Delta time cap, preventing huge jumps
+        
+        // Cap delta time to prevent huge jumps
         if (delta_time > 0.033f) delta_time = 0.033f;
-
+        
+        // Handle input
         handle_input();
-
+        
+        // Update physics
         physics_update(&physics_system, delta_time);
-
-        // Render every few frames for flickering reducing
+        
+        // Render every few frames to reduce flickering
         if (frame_count % 2 == 0) {
             render_frame();
         }
         frame_count++;
-
+        
+        // Small delay to control frame rate
         #ifdef _WIN32
-            Sleep(16);
+            Sleep(16); // ~60 FPS
         #else
-            usleep(16000);
+            usleep(16000); // ~60 FPS
         #endif
     }
-
+    
     cleanup_console();
     return 0;
 }
 
 void init_console(void) {
     #ifdef _WIN32
+        // Set console to UTF-8
         SetConsoleOutputCP(CP_UTF8);
     #else
+        // Set up non-blocking input
         struct termios term;
         tcgetattr(0, &term);
         term.c_lflag &= ~(ICANON | ECHO);
         tcsetattr(0, TCSANOW, &term);
         fcntl(0, F_SETFL, O_NONBLOCK);
     #endif
-
+    
     hide_cursor();
     clear_screen();
 }
 
 void cleanup_console(void) {
     #ifndef _WIN32
+        // Restore terminal settings
         struct termios term;
         tcgetattr(0, &term);
         term.c_lflag |= (ICANON | ECHO);
         tcsetattr(0, TCSANOW, &term);
-        printf("\033[?25h");
+        printf("\033[?25h"); // Show cursor
     #endif
-
+    
     clear_screen();
     printf("Physics simulation ended.\n");
 }
@@ -141,15 +151,15 @@ void clear_screen(void) {
 }
 
 void render_frame(void) {
-    // Clear the buffer
+    // Clear buffer
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         for (int x = 0; x < SCREEN_WIDTH; x++) {
             screen_buffer[y][x] = ' ';
         }
         screen_buffer[y][SCREEN_WIDTH] = '\0';
     }
-
-    // Border drawing
+    
+    // Draw border
     for (int x = 0; x < SCREEN_WIDTH; x++) {
         screen_buffer[0][x] = '-';
         screen_buffer[SCREEN_HEIGHT - 1][x] = '-';
@@ -158,23 +168,23 @@ void render_frame(void) {
         screen_buffer[y][0] = '|';
         screen_buffer[y][SCREEN_WIDTH - 1] = '|';
     }
-
-    // Particle drawing
-    for (int i = 0; i < physics_system->particle_count; i++) {
+    
+    // Draw particles
+    for (int i = 0; i < physics_system.particle_count; i++) {
         if (physics_system.particles[i].active) {
             draw_particle_to_buffer(&physics_system.particles[i]);
         }
     }
-
+    
     // Render to screen
     gotoxy(0, 0);
     for (int y = 0; y < SCREEN_HEIGHT; y++) {
         printf("%s\n", screen_buffer[y]);
     }
-
+    
     // Show info
-    printf("Particles: %d/%d | Controls: q=quit, r=reset, a=add particle\n",
-            physics_system->particle_count, MAX_PARTICLES);
+    printf("Particles: %d/%d | Controls: q=quit, r=reset, a=add particle\n", 
+           physics_system.particle_count, MAX_PARTICLES);
     
     fflush(stdout);
 }
@@ -182,18 +192,18 @@ void render_frame(void) {
 void draw_particle_to_buffer(Particle* particle) {
     int x = (int)(particle->position.x);
     int y = (int)(particle->position.y);
-
-    // Keep in with the bounds
+    
+    // Keep within bounds
     if (x >= 1 && x < SCREEN_WIDTH - 1 && y >= 1 && y < SCREEN_HEIGHT - 1) {
-        // Using different characters based on the particle index for variety
-        char particle_chars[] = {'*', 'O', 'o', '+', '#', '@', '%'};
+        // Use different characters based on particle index for variety
+        char particle_chars[] = {'*', 'O', 'o', '+', 'x', '#', '@', '%'};
         int char_index = ((int)particle->position.x + (int)particle->position.y) % 8;
         screen_buffer[y][x] = particle_chars[char_index];
     }
 }
 
 void setup_particles(void) {
-    // Adding some initial particles with different starting positions and velocities.
+    // Add some initial particles with different starting positions and velocities
     physics_add_particle(&physics_system, 10, 5, 8, 2);
     physics_add_particle(&physics_system, 20, 8, -5, 3);
     physics_add_particle(&physics_system, 30, 10, 3, -2);
@@ -210,32 +220,34 @@ void handle_input(void) {
         char key;
         if (read(0, &key, 1) > 0) {
     #endif
-        switch (key) {
-            case 'q':
-            case 'Q':
-                cleanup_console();
-                exit(0);
-                break;
-            case 'r':
-            case 'R':
-                // Reset simulation
-                physics_init(&physics_system);
-                setup_particles();
-                break;
-            case 'a':
-            case 'A':
-                // Add a random particle
-                if (physics_system.particle_count < MAX_PARTICLES) {
-                    float x = 5 + rand() % (SCREEN_WIDTH - 10);
-                    float y = 3 + rand() % (SCREEN_HEIGHT - 6);
-                    float vx = (rand() % 20 - 10) * 0.5f;
-                    float vy = (rand() % 20 - 10) * 0.5f;
-                    physics_add_particle(&physics_system, x, y, vx, vy);
-                }
-                break;
+            switch (key) {
+                case 'q':
+                case 'Q':
+                    cleanup_console();
+                    exit(0);
+                    break;
+                    
+                case 'r':
+                case 'R':
+                    // Reset simulation
+                    physics_init(&physics_system);
+                    setup_particles();
+                    break;
+                    
+                case 'a':
+                case 'A':
+                    // Add a random particle
+                    if (physics_system.particle_count < MAX_PARTICLES) {
+                        float x = 5 + rand() % (SCREEN_WIDTH - 10);
+                        float y = 3 + rand() % (SCREEN_HEIGHT - 6);
+                        float vx = (rand() % 20 - 10) * 0.5f;
+                        float vy = (rand() % 20 - 10) * 0.5f;
+                        physics_add_particle(&physics_system, x, y, vx, vy);
+                    }
+                    break;
+            }
         }
-    }
-#ifndef _WIN32
-    }
-#endif
+    #ifndef _WIN32
+        }
+    #endif
 }
