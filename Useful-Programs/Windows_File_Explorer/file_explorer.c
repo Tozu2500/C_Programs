@@ -151,7 +151,7 @@ void format_file_size(LARGE_INTEGER size, char *buffer) {
     double size_d = (double)size.QuadPart;
 
     if (size_d >= 1073741824.0) {  // 1GB
-        snprintf(buffer, 20, "%1.f GB" size_d / 1073741824.0);
+        snprintf(buffer, 20, "%1.f GB", size_d / 1073741824.0);
     } else if (size_d >= 1048576.0) {  // 1MB
         snprintf(buffer, 20, "%.1f MB", size_d / 1048576.0);
     } else if (size_d >= 1024.0) {  // 1KB
@@ -159,4 +159,41 @@ void format_file_size(LARGE_INTEGER size, char *buffer) {
     } else {
         snprintf(buffer, 20, "%.0f bytes", size_d);
     }
+}
+
+// Format file time for display
+void format_file_time(FILETIME *ft, char *buffer) {
+    SYSTEMTIME st;
+    FileTimeToSystemTime(ft, &st);
+
+    snprintf(buffer, 30, "%04d-%02d-%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay,
+            st.wHour, st.Wminute, st.wSecond);
+}
+
+// Clear the console screen
+void clear_screen(void) {
+    system("cls");
+}
+
+// Show help info
+void show_help(void) {
+    printf("\n=== File Explorer Help ===\n");
+    printf("Commands:\n");
+    printf("  ls, dir        - List current directory contents\n");
+    printf("  cd <dirname>   - Change to directory\n");
+    printf("  cd ..          - Go to parent directory\n");
+    printf("  info <id>      - Show detailed info for file/directorty by ID\n");
+    printf("  cls, clear     - Clear the screen\n");
+    printf("  help, ?        - Show this help message\n");
+    printf("  quit, exit     - Exit the program\n");
+    printf("\nNavigation:\n");
+    printf("  - Use directory names or '..' to navigate\n");
+    printf("  - File/directory IDs are shown in the first column\n");
+    printf("  - Use 'info <id>' to get detailed information\n");
+}
+
+// Check if a path is valid
+int is_valid_path(const char *path) {
+    DWORD attrs = GetFileAttributes(path);
+    return (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY));
 }
