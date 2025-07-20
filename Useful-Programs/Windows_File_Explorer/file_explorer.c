@@ -38,7 +38,10 @@ int list_directory(FileExplorer *explorer, const char *path) {
             strncpy(entry->name, find_data.cFileName, MAX_PATH_LEN - 1);
             entry->name[MAX_PATH_LEN - 1] = '\0';
             
-            snprintf(entry->full_path, MAX_PATH_LEN, "%s\\%s", path, find_data.cFileName);
+            int path_len = snprintf(entry->full_path, MAX_PATH_LEN, "%s\\%s", path, find_data.cFileName);
+            if (path_len >= MAX_PATH_LEN) {
+                entry->full_path[MAX_PATH_LEN - 1] = '\0';
+            }
             
             entry->attributes = find_data.dwFileAttributes;
             entry->file_size.LowPart = find_data.nFileSizeLow;
@@ -168,9 +171,14 @@ void format_file_time(FILETIME *ft, char *buffer) {
     SYSTEMTIME st;
     FileTimeToSystemTime(ft, &st);
     
-    snprintf(buffer, 30, "%04d-%02d-%02d %02d:%02d:%02d",
-             st.wYear, st.wMonth, st.wDay,
-             st.wHour, st.wMinute, st.wSecond);
+    int result = snprintf(buffer, 30, "%04d-%02d-%02d %02d:%02d:%02d",
+                         st.wYear, st.wMonth, st.wDay,
+                         st.wHour, st.wMinute, st.wSecond);
+    
+    // Ensure null termination if buffer was too small
+    if (result >= 30) {
+        buffer[29] = '\0';
+    }
 }
 
 // Clear the screen

@@ -7,8 +7,8 @@
 #include <string.h>
 #include <time.h>
 
-// Maximum path length
-#define MAX_PATH_LEN 260
+// Maximum path length - increased to handle longer paths safely
+#define MAX_PATH_LEN 512
 #define MAX_FILES 1000
 
 // File entry structure
