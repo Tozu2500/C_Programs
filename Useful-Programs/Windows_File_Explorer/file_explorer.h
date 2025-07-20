@@ -7,11 +7,11 @@
 #include <string.h>
 #include <time.h>
 
-// Constants
+// Maximum path length
 #define MAX_PATH_LEN 260
 #define MAX_FILES 1000
 
-// Struct for file entry
+// File entry structure
 typedef struct {
     char name[MAX_PATH_LEN];
     char full_path[MAX_PATH_LEN];
@@ -21,14 +21,14 @@ typedef struct {
     int is_directory;
 } FileEntry;
 
-// Struct for file explorer
+// File explorer structure
 typedef struct {
     char current_path[MAX_PATH_LEN];
     FileEntry files[MAX_FILES];
     int file_count;
 } FileExplorer;
 
-// Function protos
+// Function declarations
 void init_explorer(FileExplorer *explorer);
 int list_directory(FileExplorer *explorer, const char *path);
 void display_files(const FileExplorer *explorer);
