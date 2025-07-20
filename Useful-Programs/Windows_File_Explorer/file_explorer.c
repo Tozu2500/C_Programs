@@ -57,9 +57,9 @@ int list_directory(FileExplorer *explorer, const char *path) {
 
 // Display the current directory contents
 void display_files(const FileExplorer *explorer) {
-    printf("\n=== Current Directory: %s === \n", explorer->current_path);
-    printf("%-4s %-30s %-10s %-20s %s\n", "ID", "Name", "Type", "Size" "Modified");
-    printf("%-4s %-30s %-10s %-20s %s\n", "---", "----", "----", "----", "-------");
+    printf("\n=== Current Directory: %s ===\n", explorer->current_path);
+    printf("%-4s %-30s %-10s %-20s %s\n", "ID", "Name", "Type", "Size", "Modified");
+    printf("%-4s %-30s %-10s %-20s %s\n", "---", "----", "----", "----", "--------");
 
     for (int i = 0; i < explorer->file_count; i++) {
         const FileEntry *file = &explorer->files[i];
