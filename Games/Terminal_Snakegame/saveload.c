@@ -3,7 +3,6 @@
 int save_game(const Game *game) {
     FILE *file = fopen(SAVE_FILE, "wb");
     if (!file) {
-        perror("Failed to open save file");
         return 0;
     }
 
