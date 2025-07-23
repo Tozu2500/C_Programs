@@ -18,6 +18,6 @@ int get_file_security_info(const char* filepath, SecurityInfo* security);
 void display_security_info(const SecurityInfo* security);
 int check_file_access(const char* filepath, DWORD desired_access);
 int is_file_safe_to_access(const char* filepath);
-void display_permission_summary(const SecurityInfo* security);
+void display_permissions_summary(const SecurityInfo* security);
 
 #endif // SECURITY_H
