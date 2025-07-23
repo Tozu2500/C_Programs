@@ -17,7 +17,7 @@ typedef struct {
     int is_hidden;
     int is_readonly;
     int is_system;
-} FileSystem;
+} FileInfo;
 
 int file_exists(const char* filepath);
 int get_file_info(const char* filepath, FileInfo* info);
