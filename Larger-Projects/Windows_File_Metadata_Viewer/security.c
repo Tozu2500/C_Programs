@@ -35,7 +35,7 @@ int get_file_security_info(const char* filepath, SecurityInfo* security) {
         strcpy_s(security->owner, sizeof(security->owner), pOwnerName);
         LocalFree(pOwnerName);
     } else {
-        strcpy_s(security->owner, sizeof(seucirty->owner), "Unknown");
+        strcpy_s(security->owner, sizeof(security->owner), "Unknown");
     }
 
     if (ConvertSidToStringSidA(pGroupSid, &pGroupName)) {
@@ -45,7 +45,7 @@ int get_file_security_info(const char* filepath, SecurityInfo* security) {
         strcpy_s(security->group, sizeof(security->group), "Unknown");
     }
 
-    security->can_read = check_file_access(filepath, GENERID_READ);
+    security->can_read = check_file_access(filepath, GENERIC_READ);
     security->can_write = check_file_access(filepath, GENERIC_WRITE);
     security->can_execute = check_file_access(filepath, GENERIC_EXECUTE);
     security->can_delete = check_file_access(filepath, DELETE);
