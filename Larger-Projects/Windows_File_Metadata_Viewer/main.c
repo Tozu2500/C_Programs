@@ -108,7 +108,7 @@ int process_single_file(const char* filepath, int verbose) {
         if (is_file_safe_to_access(normalized_path)) {
             if (get_file_security_info(normalized_path, &security_info)) {
                 display_security_info(&security_info);
-                display_permission_summary(&security_info);
+                display_permissions_summary(&security_info);
             } else {
                 printf("Security Information: Not available\n\n");
             }
