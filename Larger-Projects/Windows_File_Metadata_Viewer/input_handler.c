@@ -8,7 +8,7 @@ int parse_command_line(int argc, char* argv[], CommandLineArgs* args) {
 
     if (argc < 2) {
         args->show_help = 1;
-        return;
+        return 0;
     }
 
     for (int i = 0; i < argc; i++) {
