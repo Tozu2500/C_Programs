@@ -18,4 +18,4 @@ void display_help(void) {
     printf("\n");
 }
 
-This function tells the basics on how to use this application.
+This function from the code tells the basics on how to use this application.
