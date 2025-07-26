@@ -26,7 +26,7 @@ int loadDirectory(FileList* fileList, const char* path) {
         fileList->files[fileList->count].size.LowPart = findData.nFileSizeLow;
         fileList->files[fileList->count].size.HighPart = findData.nFileSizeHigh;
         fileList->files[fileList->count].lastWrite = findData.ftLastWriteTime;
-        filelist->files[fileList->count].isDirectory =
+        fileList->files[fileList->count].isDirectory =
             (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
 
         fileList->count++;

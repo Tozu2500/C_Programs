@@ -5,7 +5,7 @@
 
 int loadDirectory(FileList* fileList, const char* path);
 void sortFiles(FileList* fileList);
-int changeDirectory(FileLifst* fileList, const char* dirName);
+int changeDirectory(FileList* fileList, const char* dirName);
 void goUpDirectory(FileList* filelist);
 void getCurrentDirectory(char* buffer, int size);
 char* formatFileSize(LARGE_INTEGER size, char* buffer);

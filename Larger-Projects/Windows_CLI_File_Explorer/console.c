@@ -21,7 +21,7 @@ void clearScreen(Console* console) {
     SetConsoleCursorPosition(console->hConsole, coordScreen);
 }
 
-void setCursorPosition(Console* console) {
+void setCursorPosition(Console* console, int x, int y) {
     COORD coord = {x, y};
     SetConsoleCursorPosition(console->hConsole, coord);
 }

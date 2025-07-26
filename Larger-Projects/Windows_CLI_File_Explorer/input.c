@@ -1,8 +1,11 @@
 #include "input.h"
 #include "fileops.h"
+#include <stdio.h>
 #include <windows.h>
 
 int handleInput(Console* console, FileList* fileList, int key) {
+    (void)console;
+    
     switch (key) {
         case 'U':
             navigateUp(fileList);
@@ -42,7 +45,14 @@ int openSelected(FileList* fileList) {
         return changeDirectory(fileList, selected->name);
     } else {
         char fullPath[MAX_PATH_LEN];
-        sprintf(fullpath, "%s\\%s", fileList->currentPath, selected->name);
+        int result = snprintf(fullPath, sizeof(fullPath), "%s\\%s", 
+                             fileList->currentPath, selected->name);
+        
+        if (result >= (int)sizeof(fullPath)) {
+            printf("Error: Path too long\n");
+            return 1;
+        }
+        
         ShellExecute(NULL, "open", fullPath, NULL, NULL, SW_SHOWNORMAL);
         return 1;
     }

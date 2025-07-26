@@ -2,9 +2,10 @@
 #include "fileops.h"
 #include <stdio.h>
 #include <string.h>
+#include <windows.h>
 
 void drawHeader(Console* console, FileList* fileList) {
-    setTextColor(console, BACKGROUND_BLUE | FOREGROUND_WHITE);
+    setTextColor(console, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_BLUE);
 
     char header[512];
     sprintf(header, " File Explorer - %s", fileList->currentPath);
@@ -26,8 +27,8 @@ void drawFileList(Console* console, FileList* fileList) {
         startIndex = fileList->selected - maxLines + 1;
     }
 
-    for (int i = 0; i < maxLines && (startIndex + 1) < fileList->count; i++) {
-        int fileIndex = startIndex + 1;
+    for (int i = 0; i < maxLines && (startIndex + i) < fileList->count; i++) {
+        int fileIndex = startIndex + i;
         FileItem* file = &fileList->files[fileIndex];
 
         char line[512];
@@ -49,7 +50,7 @@ void drawFileList(Console* console, FileList* fileList) {
         }
 
         if (fileIndex == fileList->selected) {
-            setTextColor(console, BACKGROUND_WHITE | FOREGROUND_BLACK);
+            setTextColor(console, BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE);
         } else if (file->isDirectory) {
             setTextColor(console, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
         }
@@ -70,7 +71,7 @@ void drawFileList(Console* console, FileList* fileList) {
 void drawStatusBar(Console* console, FileList* fileList) {
     int statusY = console->height - 2;
 
-    setTextColor(console, BACKGROUND_BLUE | FOREGROUND_WHITE);
+    setTextColor(console, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_BLUE);
 
     char status[512];
     sprintf(status, " %d files | Selected: %s",
@@ -88,7 +89,7 @@ void drawStatusBar(Console* console, FileList* fileList) {
 void drawHelpBar(Console* console) {
     int helpY = console->height - 1;
 
-    setTextColor(console, BACKGROUND_GREEN | FOREGROUND_WHITE);
+    setTextColor(console, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | BACKGROUND_GREEN);
 
     char help[512] = " ENTER: Open | BACKSPACE: Up | ESC: Quit | Arrow Keys: Navigate";
 
