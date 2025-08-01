@@ -74,7 +74,7 @@ extern ConsoleState g_console_state;
 
 #define COLOR_DEFAULT 7
 #define COLOR_HEADER 11
-#define COLOR_HIGHLIGHT 14
+#define UI_COLOR_HIGHLIGHT 13
 #define COLOR_WARNING 12
 #define COLOR_SUCCESS 10
 #define COLOR_PROGRESS_FILL 2

@@ -70,36 +70,36 @@ void display_system_overview(SystemInfo* info) {
 
     display_header("System Overview");
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Computer: ");
     reset_text_color();
     printf("%s\n", info->computer_name);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("User: ");
     reset_text_color();
     printf("%s\n", info->username);
 
     format_uptime(info->uptime_seconds, buffer, sizeof(buffer));
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Uptime: ");
     reset_text_color();
     printf("%s\n\n", buffer);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("CPU Usage: ");
     reset_text_color();
     printf("%.1f%%\n", info->cpu_usage);
     draw_progress_bar(0, 8, PROGRESS_BAR_WIDTH, info->cpu_usage, COLOR_PROGRESS_FILL);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("\nMemory usage: ");
     reset_text_color();
     printf("%.1f%%\n", info->memory_usage_percent);
     draw_progress_bar(0, 11, PROGRESS_BAR_WIDTH, info->memory_usage_percent, COLOR_PROGRESS_FILL);
 
     format_bytes(info->used_memory, buffer, sizeof(buffer));
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("\nUsed memory: ");
     reset_text_color();
     printf("%s", buffer);
@@ -107,27 +107,27 @@ void display_system_overview(SystemInfo* info) {
     printf(" / %s\n", buffer);
 
     format_bytes(info->available_memory, buffer, sizeof(buffer));
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Available memory: ");
     reset_text_color();
     printf("%s\n\n", buffer);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Processes: ");
     reset_text_color();
     printf("%lu\n", info->process_count);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Threads: ");
     reset_text_color();
     printf("%lu\n", info->thread_count);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("CPU Cores: ");
     reset_text_color();
     printf("%lu\n", info->sys_info.dwNumberOfProcessors);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Page size: ");
     reset_text_color();
     printf("%lu bytes\n", info->sys_info.dwPageSize);
@@ -183,7 +183,7 @@ void display_memory_info(SystemInfo* info) {
     format_bytes(info->total_virtual, virtual_buf, sizeof(virtual_buf));
     format_bytes(info->page_file_total, page_buf, sizeof(page_buf));
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Physical memory: \n");
     reset_text_color();
     printf("  Total: %s\n", total_buf);
@@ -193,14 +193,14 @@ void display_memory_info(SystemInfo* info) {
     printf("Memory usage: \n");
     draw_progress_bar(0, 9, 60, info->memory_usage_percent, COLOR_PROGRESS_FILL);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("\n\nVirtual memory: \n");
     reset_text_color();
     printf("  Total: %s\n", virtual_buf);
     format_bytes(info->available_virtual, free_buf, sizeof(free_buf));
     printf("  Available: %s\n\n", free_buf);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("System information: \n");
     reset_text_color();
     printf("  Page size: %lu bytes\n", info->sys_info.dwPageSize);
@@ -216,57 +216,57 @@ void display_detailed_process_info(ProcessInfo* info, UIState* ui_state) {
 
     display_header("Detailed process information");
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Process name: ");
     reset_text_color();
     printf("%s\n", proc->name);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Process ID: ");
     reset_text_color();
     printf("%lu\n", proc->pid);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Parent PID: ");
     reset_text_color();
     printf("%lu\n", proc->parent_pid);
 
     if (strlen(proc->path) > 0) {
-        set_text_color(COLOR_HIGHLIGHT);
+        set_text_color(UI_COLOR_HIGHLIGHT);
         printf("Path: ");
         reset_text_color();
         printf("%s\n", proc->path);
     }
 
     format_bytes(proc->memory_usage, buffer, sizeof(buffer));
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Working set: ");
     reset_text_color();
     printf("%s\n", buffer);
 
     format_bytes(proc->virtual_memory, buffer, sizeof(buffer));
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Private bytes: ");
     reset_text_color();
     printf("%s\n", buffer);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Thread count: ");
     reset_text_color();
     printf("%lu\n", proc->thread_count);
     
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Handle count: ");
     reset_text_color();
     printf("%lu\n", proc->handle_count);
 
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Priority class: ");
     reset_text_color();
     printf("%s\n", get_priority_class_string(proc->priority_class));
 
     format_time(&proc->creation_time, buffer, sizeof(buffer));
-    set_text_color(COLOR_HIGHLIGHT);
+    set_text_color(UI_COLOR_HIGHLIGHT);
     printf("Creation time: ");
     reset_text_color();
     printf("%s\n", buffer);
@@ -383,7 +383,7 @@ void draw_horizontal_line(int x, int y, int width) {
 }
 
 void draw_vertical_line(int x, int y, int height) {
-    for (int i = 0; i < heigth; i++) {
+    for (int i = 0; i < height; i++) {
         set_cursor_position(x, y + i);
         printf("|");
     }
@@ -441,6 +441,25 @@ int handle_input(UIState* ui_state) {
 
     char key = _getch();
 
+    // Handle special keys (arrows, function keys)
+    if (key == 224) {
+        char arrow = _getch();
+        switch (arrow) {
+            case 72: // Up arrow
+                if (ui_state->current_view == VIEW_PROCESSES && ui_state->selected_process_index > 0) {
+                    ui_state->selected_process_index--;
+                }
+                break;
+            case 80: // Down arrow
+                if (ui_state->current_view == VIEW_PROCESSES) {
+                    ui_state->selected_process_index++;
+                }
+                break;
+            // Add other arrow keys if needed
+        }
+        return 1;
+    }
+
     switch (key) {
         case '1':
             ui_state->current_view = VIEW_OVERVIEW;
@@ -468,12 +487,6 @@ int handle_input(UIState* ui_state) {
                 toggle_sort_criteria(ui_state);
             }
             break;
-        case 72:
-        case 75:
-            if (ui_state->current_view == VIEW_PROCESSES) {
-                ui_state->selected_process_index++;
-            }
-            break;
         case 13:
             if (ui_state->current_view == VIEW_PROCESSES) {
                 ui_state->current_view = VIEW_DETAILED_PROCESSES;
@@ -490,7 +503,7 @@ int handle_input(UIState* ui_state) {
 
 void handle_process_navigation(UIState* ui_state, char key) {
     switch (key) {
-        case 72:
+        case 'h':
             if (ui_state->selected_process_index > 0) {
                 ui_state->selected_process_index--;
             }

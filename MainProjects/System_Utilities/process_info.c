@@ -4,7 +4,7 @@ void update_process_info(ProcessInfo* info) {
     if (!info) return;
 
     memset(info, 0, sizeof(ProcessInfo));
-    get_process_list();
+    get_process_list(info);
     sort_processes_by_memory(info);
 }
 
@@ -92,7 +92,7 @@ void sort_processes_by_memory(ProcessInfo* info) {
     }
 }
 
-void sort_process_by_cpu(ProcessInfo* info) {
+void sort_processes_by_cpu(ProcessInfo* info) {
     for (int i = 0; i < info->count - 1; i++) {
         for (int j = 0; j < info->count - i - 1; j++) {
             if (info->processes[j].cpu_percent < info->processes[j + 1].cpu_percent) {
@@ -122,7 +122,7 @@ void sort_processes(ProcessInfo* info, SortCriteria criteria) {
             sort_processes_by_memory(info);
             break;
         case SORT_BY_CPU:
-            sort_process_by_cpu(info);
+            sort_processes_by_cpu(info);
             break;
         case SORT_BY_NAME:
             sort_processes_by_name(info);
