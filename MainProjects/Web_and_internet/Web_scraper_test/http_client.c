@@ -172,3 +172,52 @@ void http_response_free(http_response_t* response) {
         response->capacity = 0;
     }
 }
+
+char* http_get_header_value(const char* response, const char* header_name) {
+    if (!response || !header_name) return NULL;
+
+    char search_header[256];
+    snprintf(search_header, sizeof(search_header), "%s:", header_name);
+
+    const char* header_start = strstr(response, search_header);
+    if (!header_start) return NULL;
+
+    const char* value_start = header_start + strlen(search_header);
+    while (*value_start == ' ' || *value_start == '\t') value_start++;
+
+    const char* value_end = strstr(value_start, "\r\n");
+    if (!value_end) value_end = value_start + strlen(value_start);
+
+    size_t value_len = value_end - value_start;
+    char* value = malloc(value_len + 1);
+    if (!value) return NULL;
+
+    strncpy(value, value_start, value_len);
+    value[value_len] = '\0';
+
+    return value;
+}
+
+char* http_get_body(const char* response) {
+    if (!response) return NULL;
+
+    const char* body_start = strstr(response, "\r\n\r\n");
+    if (!body_start) return NULL;
+
+    body_start += 4;
+    size_t body_len = strlen(body_start);
+    char* body = malloc(body_len + 1);
+    if (!body) return NULL;
+
+    strcpy(body, body_start);
+    return body;
+}
+
+int http_get_status_code(const char* response) {
+    if (!response) return -1;
+
+    const char* status_start = strchr(response, ' ');
+    if (!status_start) return -1;
+
+    return atoi(status_start + 1);
+}
