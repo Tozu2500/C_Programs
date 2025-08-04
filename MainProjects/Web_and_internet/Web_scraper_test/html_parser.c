@@ -25,3 +25,10 @@ void html_node_free(html_node_t* node) {
 
     free(node);
 }
+
+void html_node_add_child(html_node_t* parent, html_node_t* child) {
+    if (!parent || !child || parent->child_count >= MAX_CHILDREN) return;
+
+    parent->children[parent->child_count++] = child;
+    child->parent = parent;
+}
