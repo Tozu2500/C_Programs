@@ -249,4 +249,61 @@ html_node_t* html_parse_element(html_parser_t* parser) {
             is_self_closing = 1;
             html_parser_next_char(parser);
         }
+
+        if (html_parser_peek_char(parser) == '>') {
+            html_parser_next_char(parser);
+        }
+
+        if (is_self_closing ||
+            strcmp(node->tag_name, "br") == 0 ||
+            strcmp(node->tag_name, "hr") == 0 ||
+            strcmp(node->tag_name, "img") == 0 ||
+            strcmp(node->tag_name, "input") == 0 ||
+            strcmp(node->tag_name, "meta") == 0 ||
+            strcmp(node->tag_name, "link") == 0) {
+                return node;
+            }
+        
+        while (parser->position < parser->length) {
+            html_parser_skip_whitespace(parser);
+
+            if (html_parser_peek_char(parser) == '<') {
+                if (html_parser_match_string(parser, '</')) {
+                    parser->position += 2;
+                    html_parser_skip_whitespace(parser);
+
+                    if (strncmp(parser->html + parser->position, node->tag_name, strlen(node->tag_name)) == 0) {
+                        parser->position += strlen(node->tag_name);
+                        html_parser_skip_whitespace(parser);
+                        if (html_parser_peek_char(parser) == '>') {
+                            html_parser_next_char(parser);
+                        }
+                        break;
+                    } else {
+                        parser->position -= 2;
+                    }
+                }
+
+                html_node_t* child = html_parse_element(parser);
+                if (child) {
+                    html_node_add_child(node, child);
+                }
+            } else {
+                char* text = html_parse_text(parser);
+                if (text) {
+                    html_node_t* text_node = html_node_create(HTML_NODE_TEXT);
+                    if (text_node) {
+                        strncpy(text_node->text_content, text, MAX_TEXT_CONTENT - 1);
+                        text_node->text_content[MAX_TEXT_CONTENT - 1] = '\0';
+                        html_node_add_child(node, text_node);
+                    }
+                    free(text);
+                } else {
+                    break;
+                }
+            }
+        }
+    
+    return node;
 }
+
