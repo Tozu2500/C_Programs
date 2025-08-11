@@ -114,5 +114,80 @@ int scraper_fetch_page(web_scraper_t* scraper, const char* url) {
     if (!scraper || !url) return -1;
 
     url_components_t components;
-    
+    if (parse_url(url, &components) < 0) {
+        return -1;
+    }
+
+    console_print(scraper->console, "Connecting to %s:%d...\n", components.host, components.port);
+
+    if (http_connect(&scraper->connection, components.host, components.port, scraper->config.timeout_ms) < 0) {
+        console_print_status(scraper->console, "Failed to connect", 0);
+        return -1;
+    }
+
+    console_print_status(scraper->console, "Connected successfully", 1);
+    console_print(scraper->console, "Sending HTTP request...\n");
+
+    if (http_send_request(&scraper->connection, "GET", components.path, components.host, NULL) < 0) {
+        console_print_status(scraper->console, "Failed to send request", 0);
+        http_disconnect(&scraper->connection);
+        return -1;
+    }
+
+    console_print(scraper->console, "Receiving response...\n");
+
+    http_response_t response;
+    if (http_receive_response(&scraper->connection, &response) < 0) {
+        console_print_status(scraper->console, "Failed to receive response", 0);
+        http_disconnect(&scraper->connection);
+        return -1;
+    }
+
+    http_disconnect(&scraper->connection);
+
+    int status_code = http_get_status_code(response.data);
+    if (status_code != 200) {
+        console_print_status(scraper->console, "HTTP error", 0);
+        console_print(scraper->console, "Status code: %d\n", status_code);
+        http_response_free(&response);
+        return -1;
+    }
+
+    console_print_status(scraper->console, "Response received", 1);
+    console_print(scraper->console, "Response size: %zu bytes\n", response.size);
+
+    char* body = http_get_body(response.data);
+    if (!body) {
+        console_print_status(scraper->console, "No response body", 0);
+        http_response_free(&response);
+        return -1;
+    }
+
+    console_print(scraper->console, "Parsing HTML...\n");
+
+    html_parser_t* parser = html_parser_create(body);
+    if (!parser) {
+        console_print_status(scraper->console, "Failed to create parser", 0);
+        free(body);
+        http_response_free(&response);
+        return -1;
+    }
+
+    if (scraper->document) {
+        html_node_free(scraper->document);
+    }
+
+    scraper->document = html_parse_document(parser);
+    html_parser_free(parser);
+    free(body);
+    http_response_free(&response);
+
+    if (!scraper->document) {
+        console_print_status(scraper->console, "Failed to parse HTML", 0);
+        return -1;
+    }
+
+    console_print_status(scraper->console, "HTML parser successfully", 1);
+    return 0;
 }
+
