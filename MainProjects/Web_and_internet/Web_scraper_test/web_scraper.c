@@ -191,3 +191,134 @@ int scraper_fetch_page(web_scraper_t* scraper, const char* url) {
     return 0;
 }
 
+html_node_list_t* scraper_select_elements(html_node_t* root, const char* selector) {
+    if (!root || !selector) return NULL;
+
+    if (selector[0] == '#') {
+        html_node_t* node = html_find_element_by_id(root, selector + 1);
+        if (!node) return NULL;
+
+        html_node_list_t* list = malloc(sizeof(html_node_list_t));
+        if (!list) return NULL;
+
+        list->nodes = malloc(sizeof(html_node_t*));
+        if (!list->nodes) {
+            free(list);
+            return NULL;
+        }
+
+        list->nodes[0] = node;
+        list->count = 1;
+        list->capacity = 1;
+        return list;
+    }
+
+    if (selector[0] == '.') {
+        return html_find_elements_by_class(root, selector + 1);
+    }
+
+    return html_find_elements_by_tag(root, selector);
+}
+
+char* scraper_extract_text(html_node_t* node) {
+    if (!node) return NULL;
+
+    return html_node_get_text_content(node);
+}
+
+char* scraper_extract_attribute(html_node_t* node, const char* attribute) {
+    if (!node || !attribute) return NULL;
+
+    const char* attr_value = html_node_get_attribute(node, attribute);
+    if (!attr_value) return NULL;
+
+    char* result = malloc(strlen(attr_value) + 1);
+    if (result) {
+        strcpy(result, attr_value);
+    }
+
+    return result;
+}
+
+int scraper_extract_data(web_scraper_t* scraper) {
+    if (!scraper || !scraper->document) return -1;
+
+    console_print(scraper->console, "Extracting data using %d rules...\n", scraper->config.rule_count);
+
+    scraper->config.item_count = 0;
+
+    for (int rule_idx = 0; rule_idx < scraper->config.rule_count; rule_idx++) {
+        scraper_rule_t* rule = &scraper->config.rules[rule_idx];
+
+        console_print(scraper->console, "Applying rule: %s (%s)\n", rule->name, rule->css_selector);
+
+        html_node_list_t* elements = scraper_select_elements(scraper->document, rule->css_selector);
+        if (!elements) {
+            console_print(scraper->console, "No elements found for rule: %s\n", rule->name);
+            continue;
+        }
+
+        console_print(scraper->console, "Found %d elements\n", elements->count);
+
+        for (int i = 0; i < elements->count && scraper->config.item_count < scraper->config.max_items; i++) {
+            html_node_t* element = elements->nodes[i];
+            scraper_item_t* item = &scraper->config.items[scraper->config.item_count];
+
+            if (rule->extract_text) {
+                char* text = scraper_extract_text(element);
+                if (text) {
+                    strncpy(item->text, text, sizeof(item->text) - 1);
+                    item->text[sizeof(item->text) - 1] = '\0';
+                    free(text);
+                }
+            }
+
+            if (rule->extract_href) {
+                char* href = scraper_extract_attribute(element, "href");
+                if (href) {
+                    strncpy(item->url, href, sizeof(item->url) - 1);
+                    item->url[sizeof(item->url) - 1] = '\0';
+                    free(href);
+                }
+            }
+
+            if (rule->extract_src) {
+                char* src = scraper_extract_attribute(element, "src");
+                if (src) {
+                    strncpy(item->image_url, src, sizeof(item->image_url) - 1);
+                    item->image_url[sizeof(item->image_url) - 1] = '\0';
+                    free(src);
+                }
+            }
+
+            if (rule->attribute[0] != '\0' && !rule->extract_href && !rule->extract_src) {
+                char* attr_value = scraper_extract_attribute(element, rule->attribute);
+                if (attr_value) {
+                    strncpy(item->additional_data, attr_value, sizeof(item->additional_data) - 1);
+                    item->additional_data[sizeof(item->additional_data) - 1] = '\0';
+                    free(attr_value);
+                }
+            }
+
+            scraper->config.item_count++;
+            console_show_progress(scraper->console, scraper->config.item_count, scraper->config.max_items, "Extracting");
+        }
+
+        html_node_list_free(elements);
+    }
+
+    console_print_status(scraper->console, "Data extraction completed", 1);
+    console_print(scraper->console, "Extracted %d items\n", scraper->config.item_count);
+
+    return scraper->config.item_count;
+}
+
+void scraper_save_results(web_scraper_t* scraper) {
+    if (!scraper || scraper->config.item_count == 0) return;
+
+    char filename[256];
+    time_t now = time(NULL);
+    struct tm* tm_info = localtime(&now);
+
+    
+}
