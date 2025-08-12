@@ -361,6 +361,25 @@ html_node_t* html_parse_document(html_parser_t* parser) {
     return root;
 }
 
+// Helper function to add nodes to a node list
+static void html_node_list_add(html_node_list_t* list, html_node_t* node) {
+    if (!list || !node) return;
+    
+    if (list->count >= list->capacity) {
+        list->capacity *= 2;
+        html_node_t** new_nodes = realloc(list->nodes, list->capacity * sizeof(html_node_t*));
+        if (new_nodes) {
+            list->nodes = new_nodes;
+        } else {
+            return; // Failed to reallocate
+        }
+    }
+    
+    if (list->count < list->capacity) {
+        list->nodes[list->count++] = node;
+    }
+}
+
 html_node_list_t* html_find_elements_by_tag(html_node_t* root, const char* tag_name) {
     if (!root || !tag_name) return NULL;
 
@@ -378,16 +397,7 @@ html_node_list_t* html_find_elements_by_tag(html_node_t* root, const char* tag_n
 
     void find_recursive(html_node_t* node) {
         if (node->type == HTML_NODE_ELEMENT && strcmp(node->tag_name, tag_name) == 0) {
-            if (list->count >= list->capacity) {
-                list->capacity *= 2;
-                html_node_t** new_nodes = realloc(list->nodes, list->capacity * sizeof(html_node_t*));
-                if (new_nodes) {
-                    list->nodes = new_nodes;
-                }
-            }
-            if (list->count < list->capacity) {
-                list->nodes[list->count++] = node;
-            }
+            html_node_list_add(list, node);
         }
 
         for (int i = 0; i < node->child_count; i++) {
@@ -425,16 +435,7 @@ html_node_list_t* html_find_elements_by_class(html_node_t* root, const char* cla
                     char* token = strtok(class_copy, " ");
                     while (token) {
                         if (strcmp(token, class_name) == 0) {
-                            if (list->count >= list->capacity) {
-                                list->capacity *= 2;
-                                html_node_t** new_nodes = realloc(list->nodes, list->capacity * sizeof(html_node_t*));
-                                if (new_nodes) {
-                                    list->nodes = new_nodes;
-                                }
-                            }
-                            if (list->count < list->capacity) {
-                                list->nodes[list->count++] = node;
-                            }
+                            html_node_list_add(list, node);
                             break;
                         }
                         token = strtok(NULL, " ");

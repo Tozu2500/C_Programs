@@ -65,7 +65,7 @@ int html_parser_match_string(html_parser_t* parser, const char* str);
 
 html_node_list_t* html_find_elements_by_tag(html_node_t* root, const char* tag_name);
 html_node_list_t* html_find_elements_by_class(html_node_t* root, const char* class_name);
-html_node_t* html_find_element_by_id(html_node_t* root, const char id);
+html_node_t* html_find_element_by_id(html_node_t* root, const char* id);
 void html_node_list_free(html_node_list_t* list);
 
 void html_print_node(html_node_t* node, int indent);

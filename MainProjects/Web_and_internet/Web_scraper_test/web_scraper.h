@@ -34,7 +34,7 @@ typedef struct {
     int item_count;
     int max_items;
     int timeout_ms;
-} scraper_config_ms;
+} scraper_config_t;
 
 typedef struct {
     console_t* console;
