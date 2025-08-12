@@ -320,5 +320,322 @@ void scraper_save_results(web_scraper_t* scraper) {
     time_t now = time(NULL);
     struct tm* tm_info = localtime(&now);
 
-    
+    strftime(filename, sizeof(filename), "scraped_data_%Y%m%d_%H%M%S.txt", tm_info);
+
+    FILE* file = fopen(filename, "w");
+    if (!file) {
+        console_print_status(scraper->console, "Failed to create output file", 0);
+        return;
+    }
+
+    fprintf(file, "Web scraping results\n");
+    fprintf(file, "==================\n");
+    fprintf(file, "URL: %s\n", scraper->config.url);
+    fprintf(file, "Scraper: %s\n", scraper->config.name);
+    fprintf(file, "Items: %d\n", scraper->config.item_count);
+    fprintf(file, "Generated: %s\n\n", ctime(&now));
+
+    for (int i = 0; i < scraper->config.item_count; i++) {
+        scraped_item_t* item = &scraper->config.items[i];
+
+        fprintf(file, "Item %d:\n", i + 1);
+        if (item->text[0]) fprintf(file, "  Text: %s\n", item->text);
+        if (item->url[0]) fprintf(file, "  URL: %s\n", item->url);
+        if (item->image_url[0]) fprintf(file, "  Image: %s\n", item->image_url);
+        if (item->additional_data[0]) fprintf(file, "  Data: %s\n", item->additional_data);
+        fprintf(file, "\n");
+    }
+
+    fclose(file);
+
+    console_print_status(scraper->console, "Results saved", 1);
+    console_print(scraper->console, "Filename: %s\n", filename);
+}
+
+void scraper_display_results(web_scraper_t* scraper) {
+    if (!scraper || scraper->config.item_count == 0) {
+        console_print_status(scraper->console, "No results to display", 0);
+        return;
+    }
+
+    console_clear(scraper->console);
+    console_print_header(scraper->console, "Scraping results");
+
+    int start = 0;
+    int items_per_page = 10;
+
+    while (1) {
+        console_goto_xy(scraper->console, 0, 4);
+
+        int end = start + items_per_page;
+        if (end > scraper->config.item_count) end = scraper->config.item_count;
+
+        console_print(scraper->console, "Showing items %d-%d of %d\n\n",
+        start + 1, end, scraper->config.item_count);
+
+        for (int i = start; i < end; i++) {
+            scraped_item_t* item = &scraper->config.items[i];
+
+            console_print_colored(scraper->console, COLOR_YELLOW, COLOR_BLACK, "Item %d:\n", i + 1);
+
+            if (item->text[0]) {
+                console_print(scraper->console, "  Text: %.80s%s\n", item->text, strlen(item->text) > 80 ? "..." : "");
+            }
+
+            if (item->url[0]) {
+                console_print(scraper->console, "  URL: %.80s%s\n", item->url, strlen(item->url) > 80 ? "..." : "");
+            }
+
+            if (item->image_url[0]) {
+                console_print(scraper->console, "  Image: %.80s%s\n", item->image_url, strlen(item->image_url) > 80 ? "..." : "");
+            }
+
+            if (item->additional_data[0]) {
+                console_print(scraper->console, "  Data: %.80s%s\n", item->additional_data, strlen(item->additional_data) > 80 ? "..." : "");
+            }
+
+            console_print(scraper->console, "\n");
+        }
+
+        console_print(scraper->console, "[N]ext page | [P]revious page | [S]ave | [Q]uit\n");
+
+        int key = _getch();
+        switch (key) {
+            case 'n':
+            case 'N':
+                if (end < scraper->config.item_count) {
+                    start += items_per_page;
+                }
+                break;
+            case 'p':
+            case 'P':
+                if (start > 0) {
+                    start -= items_per_page;
+                    if (start < 0) start = 0;
+                }
+                break;
+            case 's':
+            case 'S':
+                scraper_save_results(scraper);
+                console_wait_key(scraper->console, NULL);
+                break;
+            case 'q':
+            case 'Q':
+                return;
+        }
+
+        console_clear(scraper->console);
+        console_print_header(scraper->console, "Scraping results");
+    }
+}
+
+void scraper_show_config_menu(web_scraper_t* scraper) {
+    if (!scraper) return;
+
+    menu_t* menu = menu_create("Configuration Menu");
+    menu_add_item(menu, "Set Target URL", 1);
+    menu_add_item(menu, "Add Extraction Rule", 2);
+    menu_add_item(menu, "View Current Rules", 3);
+    menu_add_item(menu, "Clear All Rules", 4);
+    menu_add_item(menu, "Set Limits", 5);
+    menu_add_item(menu, "Back to Main Menu", 0);
+
+    while (1) {
+        int choice = menu_show(scraper->console, menu);
+
+        switch (choice) {
+            case 1: {
+                char* url = console_get_input(scraper->console, "Enter URL: ");
+                if (url && scraper_validate_url(url)) {
+                    strncpy(scraper->config.url, url, sizeof(scraper->config.url) - 1);
+                    console_print_status(scraper->console, "URL updated", 1);
+                } else {
+                    console_print_status(scraper->console, "Invalid URL", 0);
+                }
+
+                if (url) free(url);
+                console_wait_key(scraper->console, NULL);
+                break;
+            }
+
+            case 2: {
+                if (scraper->config.rule_count >= MAX_SELECTORS) {
+                    console_print_status(scraper->console, "Maximum rules reached", 0);
+                    console_wait_key(scraper->console, NULL);
+                    break;
+                }
+
+                char* name = console_get_input(scraper->console, "Rule name: ");
+                char* selector = console_get_input(scraper->console, "CSS selector: ");
+                char* attribute = console_get_input(scraper->console, "Attribute (or leave empty for text): ");
+
+                if (name && selector) {
+                    if (scraper_add_rule(scraper, name, selector,
+                                        (attribute && strlen(attribute) > 0) ? attribute : NULL) == 0) {
+                                            console_print_status(scraper->console, "Rule added", 1);
+                                        }
+                } else {
+                    console_print_status(scraper->console, "Failed to add rule", 0);
+                }
+
+            if (name) free(name);
+            if (selector) free(selector);
+            if (attribute) free(attribute);
+            console_wait_key(scraper->console, NULL);
+            break;
+        }
+
+        case 3: {
+            console_clear(scraper->console);
+            console_print_header(scraper->console, "Current rules");
+
+            if (scraper->config.rule_count == 0) {
+                console_print(scraper->console, "No rules configured\n");
+            } else {
+                for (int i = 0; i < scraper->config.rule_count; i++) {
+                    scraper_rule_t* rule = &scraper->config.rules[i];
+                    console_print(scraper->console, "%d. %s\n", i + 1, rule->name);
+                    console_print(scraper->console, "   Selector: %s\n", rule->css_selector);
+
+                    if (rule->attribute[0]) {
+                        console_print(scraper->console, "   Attribute: %s\n", rule->attribute);
+                    } else {
+                        console_print(scraper->console, "   Extract: text content\n");
+                    }
+                    console_print(scraper->console, "\n");
+                }
+            }
+            console_wait_key(scraper->console, NULL);
+            break;
+        }
+
+        case 4: {
+            if (console_get_yes_no(scraper->console, "Clear all rules? (y/n): ")) {
+                scraper->config.rule_count = 0;
+                console_print_status(scraper->console, "All rules cleared", 1);
+            }
+            console_wait_key(scraper->console, NULL);
+            break;
+        }
+
+        case 5: {
+            scraper->config.max_items = console_get_number(scraper->console,
+            "Maximum items (1-1000): ", 1, MAX_SCRAPED_ITEMS);
+            scraper->config.timeout_ms = console_get_number(scraper->console,
+            "Timeout in seconds (5-120): ", 5, 120) * 1000;
+            console_print_status(scraper->console, "Limits updated", 1);
+            console_wait_key(scraper->console, NULL);
+            break;
+        }
+
+        case 0:
+        case -1:
+            menu_free(menu);
+            return;
+        }
+    }
+}
+
+void scraper_print_statistics(web_scraper_t* scraper) {
+    if (!scraper) return;
+
+    console_print(scraper->console, "\nScraper statistics:\n");
+    console_print_separator(scraper->console);
+    console_print(scraper->console, "Target URL: %s\n",
+    scraper->config.url[0] ? scraper->config.url : "Not set");
+    console_print(scraper->console, "Rules configured: %d\n", scraper->config.rule_count);
+    console_print(scraper->console, "Items scraped: %d\n", scraper->config.item_count);
+    console_print(scraper->console, "Max items: %d\n", scraper->config.max_items);
+    console_print(scraper->console, "Timeout: %d seconds\n", scraper->config.timeout_ms / 1000);
+    console_print_separator(scraper->console);
+}
+
+int scraper_run(web_scraper_t* scraper) {
+    if (!scraper) return -1;
+
+    if (!scraper->config.url[0]) {
+        console_print_status(scraper->console, "No URL configured", 0);
+        return -1;
+    }
+
+    if (scraper->config.rule_count == 0) {
+        console_print_status(scraper->console, "No extraction rules configured", 0);
+        return -1;
+    }
+
+    console_clear(scraper->console);
+    console_print_header(scraper->console, "Running Web Scraper");
+
+    scraper_print_statistics(scraper);
+
+    console_print(scraper->console, "\nStarting scraper...\n");
+
+    if (scraper_fetch_page(scraper, scraper->config.url) < 0) {
+        return -1;
+    }
+
+    if (scraper_extract_data(scraper) < 0) {
+        return -1;
+    }
+
+    console_print_status(scraper->console, "Scraping completed successfully", 1);
+    console_wait_key(scraper->console, NULL);
+
+    return 0;
+}
+
+void scraper_show_main_menu(web_scraper_t* scraper) {
+    if (!scraper) return;
+
+    menu_t* menu = menu_create("Web Scraper v1.0");
+    menu_add_item(menu, "Quick Setup", 1);
+    menu_add_item(menu, "Advanced Configuration", 2);
+    menu_add_item(menu, "Run Scraper", 3);
+    menu_add_item(menu, "View Results", 4);
+    menu_add_item(menu, "Save Results", 5);
+    menu_add_item(menu, "Statistics", 6);
+    menu_add_item(menu, "Exit", 0);
+
+    while (1) {
+        int choice = menu_show(scraper->console, menu);
+
+        switch (choice) {
+            case 1:
+                if (scraper_configure(scraper) == 0) {
+                    scraper_add_rule(scraper, "Title", "title", NULL);
+                    scraper_add_rule(scraper, "Links", "a," "href");
+                    scraper_add_rule(scraper, "Images", "img", "src");
+                }
+                break;
+
+            case 2:
+                scraper_show_config_menu(scraper);
+                break;
+
+            case 3:
+                scraper_run(scraper);
+                break;
+
+            case 4:
+                scraper_display_results(scraper);
+                break;
+            
+            case 5:
+                scraper_save_results(scraper);
+                console_wait_key(scraper->console, NULL);
+                break;
+
+            case 6:
+                console_clear(scraper->console);
+                console_print_header(scraper->config, "Statistics");
+                scraper_print_statistics(scraper);
+                console_wait_key(scraper->console, NULL);
+                break;
+
+            case 0:
+            case -1:
+                menu_free(menu);
+                return;
+        }
+    }
 }
