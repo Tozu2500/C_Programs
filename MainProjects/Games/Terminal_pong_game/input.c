@@ -146,7 +146,7 @@ void handleGameInput(Input* input, Game* game) {
         setDifficulty(game, MEDIUM_DIFFICULTY);
     }
 
-    if (isKeyPressed(input '3')) {
+    if (isKeyPressed(input, '3')) {
         setDifficulty(game, HARD_DIFFICULTY);
     }
 

@@ -51,7 +51,7 @@ void waitForFrame(Timer* timer) {
     float currentFrameTime = timer->deltaTime * 1000.0f;
 
     if (currentFrameTime < targetFrameTime) {
-        sleepMs((int)(targetFrameRate - currentFrameTime));
+        sleepMs((int)(targetFrameTime - currentFrameTime));
     }
 }
 

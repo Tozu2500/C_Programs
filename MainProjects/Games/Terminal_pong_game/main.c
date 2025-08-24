@@ -75,7 +75,7 @@ void initProgram(PongProgram* program) {
     sleepMs(1000);
 }
 
-void cleanUpProgram(PongProgram* program) {
+void cleanupProgram(PongProgram* program) {
     cleanupDisplay(&program->display);
     restoreConsole();
     printf("\nThanks for playing!\n");
@@ -111,7 +111,7 @@ void renderProgram(PongProgram* program) {
             renderMenu(&program->display, program->menuSelection);
             break;
         case GAME_STATE:
-            renderGame(&program->display, &program->name);
+            renderGame(&program->display, &program->game);
             if (isGamePaused(&program->game)) {
                 renderPauseScreen(&program->display);
             }
