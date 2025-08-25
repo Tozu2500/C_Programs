@@ -199,4 +199,89 @@ void handleSettingsState(PongProgram* program) {
     sprintf(settingsText[7], "Press ESC to return to the main menu");
 
     clearDisplay(&program->display);
+    drawBorder(&program->display, 0, 0, program->display.width - 1, program->display.height - 1);
+
+    for (int i = 0; i < 8; i++) {
+        int textLen = strlen(settingsText[i]);
+        int startX = (program->display.width - textLen) / 2;
+
+        for (int j = 0; j < textLen; j++) {
+            setDisplayChar(&program->display, startX + j, 3 + i * 2, settingsText[i][j]);
+        }
+    }
+
+    if (isKeyPressed(&program->input, '1')) {
+        setGameSpeed(&program->game, program->game.gameSpeed + 5);
+    }
+
+    if (isKeyPressed(&program->input, '2')) {
+        setGameSpeed(&program->game, program->game.gameSpeed - 5);
+    }
+
+    if (isKeyPressed(&program->input, '3')) {
+        int newDifficulty = (program->game.difficulty % 3) + 1;
+        setDifficulty(&program->game, newDifficulty);
+    }
+
+    if (isKeyPressed(&program->input, '4')) {
+        toggleSound(&program->game);
+    }
+
+    if (isKeyPressed(&program->input, '5')) {
+        if (isPaddleAI(&program->game.rightPaddle)) {
+            disableAI(&program->game.rightPaddle);
+        } else {
+            enableAI(&program->game.rightPaddle, program->game.difficulty);
+        }
+    }
+
+    if (isKeyPressed(&program->input, 27)) {
+        changeState(program, MENU_STATE);
+    }
+}
+
+void handleStatsState(PongProgram* program) {
+    if (isKeyPressed(&program->input, 27) || isKeyPressed(&program->input, ' ') || isKeyPressed(&program->input, 13)) {
+        changeState(program, MENU_STATE);
+    }
+}
+
+void handleGameOverState(PongProgram* program) {
+    if (isKeyPressed(&program->input, 'r') || isKeyPressed(&program->input, 'R')) {
+        startNewGame(program);
+        changeState(program, GAME_STATE);
+    }
+
+    if (isKeyPressed(&program->input, 'q') || isKeyPressed(&program->input, 'Q') || isKeyPressed(&program->input, 27)) {
+        changeState(program, MENU_STATE);
+    }
+}
+
+void changeState(PongProgram* program, ProgramState newState) {
+    program->currentState = newState;
+
+    if (newState == MENU_STATE) {
+        program->menuSelection = 0;
+    }
+
+    if (newState == SETTINGS_STATE) {
+        program->settingsSelection = 0;
+    }
+}
+
+void showMainMenu(PongProgram* program) {
+    renderMenu(&program->display, program->menuSelection);
+}
+
+void showSettings(PongProgram* program) {
+    handleSettingsState(program);
+}
+
+void showStatistics(PongProgram* program) {
+    renderStats(&program->display, &program->game.score);
+}
+
+void startNewGame(PongProgram* program) {
+    resetGame(&program->game);
+    program->game.running = 1;
 }
