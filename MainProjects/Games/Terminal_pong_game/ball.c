@@ -1,6 +1,6 @@
 #include "ball.h"
 #include "utils.h"
-#include <math.>
+#include <math.h>
 #include <stdlib.h>
 
 void initBall(Ball* ball, int gameWidth, int gameHeight) {

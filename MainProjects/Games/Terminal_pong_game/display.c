@@ -139,12 +139,12 @@ void renderMenu(Display* display, int selection) {
     for (int i = 0; i < numOptions; i++) {
         int optionLen = strlen(options[i]);
         int optionX = (display->width - optionLen) / 2;
-
+        
         if (i == selection) {
             setDisplayChar(display, optionX - 2, startY + i, '>');
         }
-
-        for (int j = 0; j < optionsLen; j++) {
+        
+        for (int j = 0; j < optionLen; j++) {
             setDisplayChar(display, optionX + j, startY + i, options[i][j]);
         }
     }

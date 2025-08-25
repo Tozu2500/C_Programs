@@ -1,5 +1,6 @@
 #include "collision.h"
 #include "utils.h"
+#include "types.h"
 #include <math.h>
 #include <stdlib.h>
 
@@ -105,7 +106,7 @@ void resolveBallPaddleCollision(Ball* ball, Paddle* paddle, CollisionInfo* info)
     if (paddle->player == PLAYER_LEFT) {
         ball->x = (float)(getPaddleX(paddle) + 1);
     } else {
-        ball->y = (float)(getPaddleX(paddle) - 1);
+        ball->x = (float)(getPaddleX(paddle) - 1);
     }
 }
 
@@ -113,9 +114,9 @@ void resolveBallWallCollision(Ball* ball, CollisionInfo* info) {
     if (!info->collided) {
         return;
     }
-
+    
     reverseBallY(ball);
-
+    
     if (info->side == 1) {
         ball->y = 1.0f;
     } else {

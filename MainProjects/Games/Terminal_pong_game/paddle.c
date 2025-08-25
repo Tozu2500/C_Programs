@@ -48,7 +48,7 @@ void enableAI(Paddle* paddle, int difficulty) {
         case 2:
             paddle->aiSpeed = 3;
             break;
-        case 3.
+        case 3:
             paddle->aiSpeed = 4;
             break;
     }
