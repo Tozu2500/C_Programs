@@ -51,3 +51,229 @@ int get_file_info(const char* path, FileInfo* info) {
 
     return 0;
 }
+
+bool file_matches_filter(const char* filename, const FileFilter* filter) {
+    if (!filename || !filter) return false;
+
+    const char* name = strrchr(filename, '\\');
+    if (name) name++;
+    else name = filename;
+
+    const char* pattern = filter->pattern;
+    const char* str = name;
+
+    while (*pattern && *str) {
+        if (*pattern == '*') {
+            pattern++;
+            if (!*pattern) return true;
+
+            while (*str) {
+                if (file_matches_filter(str, &(FileFilter){0})) {
+                    FileFilter temp = *filter;
+                    strcpy(temp.pattern, pattern);
+                    if (file_matches_filter(str, &temp)) return true;
+                }
+                str++;
+            }
+            return false;
+        } else if (*pattern == '?') {
+            pattern++;
+            str++;
+        } else if (tolower(*pattern) == tolower(*str)) {
+            pattern++;
+            str++;
+        } else {
+            return false;
+        }
+    }
+
+    while (*pattern == '*') pattern++;
+
+    return !*pattern && !*str;
+}
+
+bool should_copy_file(const FileInfo* info, const CopyOptions* options) {
+    if (!info || !options) return false;
+
+    if (options->skip_hidden && (info->attributes & FILE_ATTRIBUTE_HIDDEN)) {
+        return false;
+    }
+
+    if (options->skip_system && (info->attributes & FILE_ATTRIBUTE_SYSTEM)) {
+        return false;
+    }
+
+    if (info->size < options->min_file_size || info->size > options->max_file_size) {
+        return false;
+    }
+
+    if (CompareFileTime(&info->modified_time, &options->modified_after) < 0 &&
+        options->modified_after.dwLowDateTime != 0) {
+        return false;
+    }
+
+    if (CompareFileTime(&info->modified_time, &options->modified_before) > 0 &&
+        options->modified_before.dwLowDateTime != 0) {
+        return false;
+    }
+
+    bool include_file = options->filter_count == 0;
+
+    for (int i = 0; i < options->filter_count; i++) {
+        if (file_matches_filter(info->path, &options->filters[i])) {
+            if (options->filters[i].type == FILTER_INCLUDE) {
+                include_file = true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    return include_file;
+}
+
+int create_directory_structure(const char* path) {
+    if (!path) return -1;
+
+    char temp[MAX_PATH_LENGTH];
+    strncpy(temp, path, MAX_PATH_LENGTH - 1);
+    temp[MAX_PATH_LENGTH - 1] = '\0';
+
+    for (char* p = temp; *p; p++) {
+        if (*p == '\\' || *p == '/') {
+            char orig = *p;
+            *p = '\0';
+
+            if (strlen(temp) > 0 && temp[strlen(temp) - 1] != ':') {
+                DWORD attr = GetFileAttributesA(temp);
+                if (attr == INVALID_FILE_ATTRIBUTES) {
+                    if (!CreateDirectoryA(temp, NULL)) {
+                        DWORD error = GetLastError();
+                        if (error != ERROR_ALREADY_EXISTS) {
+                            return -1;
+                        }
+                    }
+                }
+            }
+            *p = orig;
+        }
+    }
+
+    DWORD attr = GetFileAttributesA(temp);
+    if (attr == INVALID_FILE_ATTRIBUTES) {
+        if (!CreateDirectoryA(temp, NULL)) {
+            DWORD error = GetLastError();
+            if (error != ERROR_ALREADY_EXISTS) {
+                return -1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int calculate_file_hash(const char* path, unsigned char* hash, size_t hash_size) {
+    if (!path || !hash || hash_size < 32) return -1;
+
+    HANDLE hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) return -1;
+
+    memset(hash, 0, hash_size);
+
+    unsigned long long checksum = 0;
+    DWORD bytesRead;
+    unsigned char buffer[8192];
+
+    while (ReadFile(hFile, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
+        for (DWORD i = 0; i < bytesRead; i++) {
+            checksum = ((checksum << 5) + checksum) + buffer[i];
+        }
+    }
+
+    memcpy(hash, &checksum, sizeof(checksum));
+
+    CloseHandle(hFile);
+    return 0;
+}
+
+int verify_file_copy(const char* source, const char* dest) {
+    if (!source || !dest) return -1;
+
+    FileInfo src_info, dst_info;
+    if (get_file_info(source, &src_info) != 0) return -1;
+    if (get_file_info(dest, &dst_info) != 0) return -1;
+
+    if (src_info.size != dst_info.size) return -1;
+
+    unsigned char src_hash[32], dst_hash[32];
+    if (calculate_file_hash(source, src_hash, 32) != 0) return -1;
+    if (calculate_file_hash(dest, dst_hash, 32) != 0) return -1;
+
+    if (memcmp(src_hash, dst_hash, 32) != 0) return -1;
+
+    return 0;
+}
+
+int copy_single_file(const char* source, const char* dest, const CopyOptions* options) {
+    if (!source || !dest || !options) return -1;
+
+    HANDLE hSource = CreateFileA(source, GENERIC_READ, FILE_SHARE_READ, NULL,
+                                OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
+    if (hSource == INVALID_HANDLE_VALUE) return -1;
+
+    char* dest_dir[MAX_PATH_LENGTH];
+    strncpy(dest_dir, dest, MAX_PATH_LENGTH - 1);
+    dest_dir[MAX_PATH_LENGTH - 1] = '\0';
+
+    char* last_slash = strrchr(dest_dir, '\\');
+    if (last_slash) {
+        *last_slash = '\0';
+        if (create_directory_structure(dest_dir) != 0) {
+            CloseHandle(hSource);
+            return -1;
+        }
+    }
+
+    HANDLE hDest = CreateFileA(dest, GENERIC_WRITE, 0, NULL,
+                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hDest == INVALID_HANDLE_VALUE) {
+        CloseHandle(hSource);
+        return -1;
+    }
+
+    DWORD bytesRead, bytesWritten;
+    int result = 0;
+
+    while (ReadFile(hSource, copy_buffer, BUFFER_SIZE, &bytesRead, NULL) && bytesRead > 0) {
+        if (!WriteFile(hDest, copy_buffer, bytesRead, &bytesWritten, NULL) ||
+            bytesWritten != bytesRead) {
+            result = -1;
+            break;
+        }
+    }
+
+    if (options->preserve_attributes && result == 0) {
+        BY_HANDLE_FILE_INFORMATION fileInfo;
+        if (GetFileInformationByHandle(hSource, &fileInfo)) {
+            SetFileName(hDest, &fileInfo.ftCreationTime,
+                        &fileInfo.ftLastAccessTime, &fileInfo.ftLastWriteTime);
+        }
+    }
+
+    CloseHandle(hSource);
+    CloseHandle(hDest);
+
+    if (result == 0 && options->preserve_attributes) {
+        DWORD attrs = GetFileAttributesA(source);
+        if (attrs != INVALID_FILE_ATTRIBUTES) {
+            SetFileAttributesA(dest, attrs);
+        }
+    }
+
+    if (result == 0 && options->verify_copy) {
+        result = verify_file_copy(source, dest);
+    }
+
+    return result;
+}
