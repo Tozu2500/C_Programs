@@ -58,7 +58,7 @@ typedef struct {
     FILETIME modified_before;
 } CopyOptions;
 
-typedef struct {
+typedef struct CopyStatistics {
     unsigned long long total_files;
     unsigned long long copied_files;
     unsigned long long skipped_files;
@@ -68,6 +68,7 @@ typedef struct {
     DWORD start_time;
     DWORD end_time;
     bool in_progress;
+    void (*progress_callback)(const struct CopyStatistics*);
 } CopyStatistics;
 
 typedef struct {

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 static unsigned char copy_buffer[BUFFER_SIZE];
 
@@ -277,6 +278,48 @@ int copy_single_file(const char* source, const char* dest, const CopyOptions* op
     return result;
 }
 
+// Helper function to count files and bytes before copying
+static void count_files_recursive(const char* source, const CopyOptions* options, CopyStatistics* stats) {
+    if (!source || !options || !stats) return;
+    
+    char search_path[MAX_PATH_LENGTH];
+    snprintf(search_path, MAX_PATH_LENGTH, "%s\\*", source);
+    
+    WIN32_FIND_DATAA findData;
+    HANDLE hFind = FindFirstFileA(search_path, &findData);
+    
+    if (hFind == INVALID_HANDLE_VALUE) return;
+    
+    do {
+        if (strcmp(findData.cFileName, ".") == 0 || 
+            strcmp(findData.cFileName, "..") == 0) {
+            continue;
+        }
+        
+        char src_path[MAX_PATH_LENGTH];
+        snprintf(src_path, MAX_PATH_LENGTH, "%s\\%s", source, findData.cFileName);
+        
+        FileInfo info;
+        if (get_file_info(src_path, &info) != 0) {
+            continue;
+        }
+        
+        if (info.is_directory) {
+            if (options->recursive) {
+                count_files_recursive(src_path, options, stats);
+            }
+        } else {
+            if (should_copy_file(&info, options)) {
+                stats->total_files++;
+                stats->total_bytes += info.size;
+            }
+        }
+        
+    } while (FindNextFileA(hFind, &findData));
+    
+    FindClose(hFind);
+}
+
 int copy_directory_recursive(const char* source, const char* dest, 
                             const CopyOptions* options, CopyStatistics* stats) {
     if (!source || !dest || !options || !stats) return -1;
@@ -309,19 +352,20 @@ int copy_directory_recursive(const char* source, const char* dest,
             continue;
         }
         
-        stats->total_files++;
-        
         if (info.is_directory) {
             if (options->recursive) {
                 copy_directory_recursive(src_path, dst_path, options, stats);
             }
         } else {
             if (should_copy_file(&info, options)) {
-                stats->total_bytes += info.size;
-                
                 if (copy_single_file(src_path, dst_path, options) == 0) {
                     stats->copied_files++;
                     stats->copied_bytes += info.size;
+                    
+                    // Call progress callback if provided
+                    if (stats->progress_callback) {
+                        stats->progress_callback(stats);
+                    }
                 } else {
                     stats->failed_files++;
                 }
@@ -339,18 +383,37 @@ int copy_directory_recursive(const char* source, const char* dest,
 int perform_copy_operation(const CopyOptions* options, CopyStatistics* stats) {
     if (!options || !stats) return -1;
     
+    // Save the progress callback before memset
+    void (*saved_callback)(const struct CopyStatistics*) = stats->progress_callback;
+    
     memset(stats, 0, sizeof(CopyStatistics));
+    stats->progress_callback = saved_callback;  // Restore callback
     stats->start_time = GetTickCount();
     stats->in_progress = true;
     
     FileInfo src_info;
     if (get_file_info(options->source, &src_info) != 0) {
         stats->in_progress = false;
+        printf("\n  ERROR: Cannot access source path\n");
         return -1;
     }
     
     int result;
     if (src_info.is_directory) {
+        // First, count all files and bytes
+        printf("\n  Scanning files...\n");
+        count_files_recursive(options->source, options, stats);
+        printf("  Found %llu files (%.2f MB)\n\n", 
+               stats->total_files, 
+               stats->total_bytes / (1024.0 * 1024.0));
+        
+        // Reset copied counters (total_files and total_bytes are preserved)
+        stats->copied_files = 0;
+        stats->copied_bytes = 0;
+        stats->failed_files = 0;
+        stats->skipped_files = 0;
+        
+        // Now perform the actual copy
         result = copy_directory_recursive(options->source, options->destination, 
                                          options, stats);
     } else {

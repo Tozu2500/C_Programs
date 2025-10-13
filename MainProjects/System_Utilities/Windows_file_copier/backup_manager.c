@@ -3,6 +3,33 @@
 #include <string.h>
 #include <stdlib.h>
 
+// Progress display helper function
+static void display_backup_progress(const CopyStatistics* stats) {
+    if (!stats) return;
+    
+    double file_progress = (stats->total_files > 0) ? 
+        (100.0 * stats->copied_files / stats->total_files) : 0.0;
+    double byte_progress = 0.0;
+    
+    if (stats->total_bytes > 0) {
+        byte_progress = 100.0 * stats->copied_bytes / stats->total_bytes;
+    }
+    
+    double total_mb = stats->total_bytes / (1024.0 * 1024.0);
+    double copied_mb = stats->copied_bytes / (1024.0 * 1024.0);
+    
+    // Clear current line and display progress
+    printf("\r  Progress: %llu/%llu files (%.1f%%) | %.2f MB / %.2f MB (%.1f%%)          ",
+           stats->copied_files, stats->total_files, file_progress,
+           copied_mb, total_mb, byte_progress);
+    fflush(stdout);
+    
+    // If complete, add newline
+    if (stats->copied_files >= stats->total_files) {
+        printf("\n");
+    }
+}
+
 int initialize_backup_catalog(BackupCatalog* catalog, const char* path) {
     if (!catalog || !path) return -1;
     
@@ -47,7 +74,7 @@ int load_backup_catalog(BackupCatalog* catalog) {
         return -1;
     }
     
-    if (fread(catalog->sets, sizeof(BackupSet), catalog->set_count, file) != catalog->set_count) {
+    if (fread(catalog->sets, sizeof(BackupSet), catalog->set_count, file) != (size_t)catalog->set_count) {
         fclose(file);
         catalog->set_count = 0;
         return -1;
@@ -149,7 +176,7 @@ int load_backup_manifest(const char* backup_path, BackupFileEntry** entries, int
         return -1;
     }
     
-    if (fread(*entries, sizeof(BackupFileEntry), *count, manifest) != *count) {
+    if (fread(*entries, sizeof(BackupFileEntry), *count, manifest) != (size_t)(*count)) {
         free(*entries);
         *entries = NULL;
         fclose(manifest);
@@ -163,6 +190,9 @@ int load_backup_manifest(const char* backup_path, BackupFileEntry** entries, int
 int create_backup(const char* source, const char* dest, BackupType type, const CopyOptions* options) {
     if (!source || !dest || !options) return -1;
     
+    // Suppress unused parameter warning
+    (void)type;
+    
     char backup_dir[MAX_PATH_LENGTH];
     SYSTEMTIME st;
     GetLocalTime(&st);
@@ -175,6 +205,11 @@ int create_backup(const char* source, const char* dest, BackupType type, const C
     strncpy(backup_opts.destination, backup_dir, MAX_PATH_LENGTH - 1);
     
     CopyStatistics stats;
+    memset(&stats, 0, sizeof(CopyStatistics));
+    
+    // Set up progress callback
+    stats.progress_callback = display_backup_progress;
+    
     int result = perform_copy_operation(&backup_opts, &stats);
     
     if (result == 0) {

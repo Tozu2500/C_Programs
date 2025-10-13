@@ -58,9 +58,9 @@ int display_menu(void) {
 
     set_console_color(COLOR_CYAN);
     printf("\n");
-    printf("  ╔════════════════════════════════════════════════╗\n");
-    printf("  ║   FILE COPIER & BACKUP TOOL                   ║\n");
-    printf("  ╚════════════════════════════════════════════════╝\n");
+    printf("  ===================================================\n");
+    printf("  |   FILE COPIER & BACKUP TOOL                    |\n");
+    printf("  ===================================================\n");
     set_console_color(COLOR_WHITE);
     
     printf("\n");
@@ -99,15 +99,43 @@ int get_user_choice(int min, int max) {
 int get_user_input(const char* prompt, char* buffer, size_t size) {
     if (!prompt || !buffer || size == 0) return -1;
     
-    printf("%s", prompt);
-    
-    if (!fgets(buffer, size, stdin)) {
-        return -1;
-    }
-    
-    size_t len = strlen(buffer);
-    if (len > 0 && buffer[len - 1] == '\n') {
-        buffer[len - 1] = '\0';
+    while (1) {
+        printf("%s", prompt);
+        
+        if (!fgets(buffer, size, stdin)) {
+            return -1;
+        }
+        
+        size_t len = strlen(buffer);
+        if (len > 0 && buffer[len - 1] == '\n') {
+            buffer[len - 1] = '\0';
+            len--;
+        }
+        
+        // Check if input is empty
+        if (len == 0 || buffer[0] == '\0') {
+            display_error("Input cannot be empty, please try again");
+            continue;
+        }
+        
+        // Trim leading whitespace
+        size_t start = 0;
+        while (buffer[start] == ' ' || buffer[start] == '\t') {
+            start++;
+        }
+        
+        // Check if input is only whitespace
+        if (buffer[start] == '\0') {
+            display_error("Input cannot be empty, please try again");
+            continue;
+        }
+        
+        // Move trimmed string to the beginning
+        if (start > 0) {
+            memmove(buffer, buffer + start, len - start + 1);
+        }
+        
+        break;
     }
     
     return 0;
@@ -117,15 +145,33 @@ int confirm_action(const char* message) {
     if (!message) return 0;
 
     char response[10];
-    printf("%s (y/n): ", message);
+    
+    while (1) {
+        printf("%s (y/n): ", message);
 
-    if (fgets(response, sizeof(response), stdin)) {
-        if (response[0] == 'y' || response[0] == 'Y') {
-            return 1;
+        if (fgets(response, sizeof(response), stdin)) {
+            // Remove newline
+            size_t len = strlen(response);
+            if (len > 0 && response[len - 1] == '\n') {
+                response[len - 1] = '\0';
+            }
+            
+            // Check for valid input
+            if (response[0] == 'y' || response[0] == 'Y') {
+                return 1;
+            } else if (response[0] == 'n' || response[0] == 'N') {
+                return 0;
+            } else if (response[0] == '\0') {
+                display_error("Please enter 'y' or 'n'");
+                continue;
+            } else {
+                display_error("Invalid input. Please enter 'y' or 'n'");
+                continue;
+            }
         }
+        
+        return 0;
     }
-
-    return 0;
 }
 
 int display_progress(const CopyStatistics* stats, bool force_refresh) {
@@ -180,9 +226,9 @@ int display_statistics(const CopyStatistics* stats) {
 
     printf("\n\n");
     set_console_color(COLOR_CYAN);
-    printf("  ╔════════════════════════════════════════════════╗\n");
-    printf("  ║   OPERATION STATISTICS                        ║\n");
-    printf("  ╚════════════════════════════════════════════════╝\n");
+    printf("  ===================================================\n");
+    printf("  |   OPERATION STATISTICS                          |\n");
+    printf("  ===================================================\n");
     set_console_color(COLOR_WHITE);
 
     printf("\n");
@@ -227,9 +273,9 @@ int display_backup_list(const BackupCatalog* catalog) {
 
     printf("\n");
     set_console_color(COLOR_CYAN);
-    printf("  ╔════════════════════════════════════════════════╗\n");
-    printf("  ║   BACKUP CATALOG                              ║\n");
-    printf("  ╚════════════════════════════════════════════════╝\n");
+    printf("  ===================================================\n");
+    printf("  |   BACKUP CATALOG                                |\n");
+    printf("  ===================================================\n");
     set_console_color(COLOR_WHITE);
 
     printf("\n  Total backups: %d\n\n", catalog->set_count);
@@ -270,14 +316,13 @@ int display_backup_list(const BackupCatalog* catalog) {
 int configure_copy_options_interactive(CopyOptions* options) {
     if (!options) return -1;
     
-    char buffer[512];
     int choice;
     
     printf("\n");
     set_console_color(COLOR_CYAN);
-    printf("  ╔════════════════════════════════════════════════╗\n");
-    printf("  ║   CONFIGURE COPY OPTIONS                      ║\n");
-    printf("  ╚════════════════════════════════════════════════╝\n");
+    printf("  ===================================================\n");
+    printf("  |   CONFIGURE COPY OPTIONS                        |\n");
+    printf("  ===================================================\n");
     set_console_color(COLOR_WHITE);
     printf("\n");
     
