@@ -71,7 +71,7 @@ bool stack_pop_string(Stack *stack, char **value);
 bool stack_pop_pointer(Stack *stack, void **value);
 
 // Peek operations (stack_peek.c)
-bool stack_peep(const Stack *stack, StackElement *element);
+bool stack_peek(const Stack *stack, StackElement *element);
 bool stack_peek_int(const Stack *stack, int *value);
 bool stack_peek_char(const Stack *stack, char *value);
 bool stack_peek_float(const Stack *stack, float *value);
