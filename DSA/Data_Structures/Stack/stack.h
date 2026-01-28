@@ -78,4 +78,14 @@ bool stack_peek_float(const Stack *stack, float *value);
 bool stack_peek_double(const Stack *stack, double *value);
 const StackElement* stack_peek_element(const Stack *stack);
 
+// Utility operations (stack_util.c)
+void stack_clear(Stack *stack);
+Stack* stack_copy(const Stack *stack);
+void stack_print(const Stack *stack);
+void stack_print_statistics(const Stack *stack);
+bool stack_search(const Stack *stack, const StackElement *element, int *position);
+void stack_reverse(Stack *stack);
+bool stack_get_at(const Stack* stack, int index, StackElement *element);
+int stack_count_type(const Stack *stack, DataType type);
+
 #endif // STACK_H
