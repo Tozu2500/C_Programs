@@ -63,5 +63,11 @@ bool stack_push_pointer(Stack *stack, void *value);
 
 // Pop operations (stack_pop.c)
 bool stack_pop(Stack *stack, StackElement *element);
+bool stack_pop_int(Stack *stack, int *value);
+bool stack_pop_float(Stack *stack, float *value);
+bool stack_pop_double(Stack *stack, double *value);
+bool stack_pop_char(Stack *stack, char *value);
+bool stack_pop_string(Stack *stack, char **value);
+bool stack_pop_pointer(Stack *stack, void **value);
 
 #endif // STACK_H
