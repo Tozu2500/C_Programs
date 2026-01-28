@@ -53,4 +53,15 @@ int stack_size(const Stack *stack);
 int stack_capacity(const Stack *stack);
 bool stack_resize(Stack *stack, int new_capacity);
 
+// Push operations (stack_push.c)
+bool stack_push_int(Stack *stack, int value);
+bool stack_push_float(Stack *stack, float value);
+bool stack_push_double(Stack *stack, double value);
+bool stack_push_char(Stack *stack, char value);
+bool stack_push_string(Stack *stack, const char *value);
+bool stack_push_pointer(Stack *stack, void *value);
+
+// Pop operations (stack_pop.c)
+bool stack_pop(Stack *stack, StackElement *element);
+
 #endif // STACK_H
