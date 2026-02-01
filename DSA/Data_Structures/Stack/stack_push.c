@@ -39,7 +39,7 @@ bool stack_push_int(Stack *stack, int value) {
     StackElement element;
     element.data.i = value;
     element.type = TYPE_INT;
-    return stack_push_elements(stack, &element);
+    return stack_push_element(stack, &element);
 }
 
 // Push float
